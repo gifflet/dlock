@@ -1,0 +1,45 @@
+name: dLock CI
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build_and_release:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build binaries
+        run: |
+          go get
+          echo "Preparing Windows binary"
+          GOOS=windows GOARCH=amd64 go build -ldflags="-X 'main.AppVersion=${{ github.ref_name}} '" -o dlock.exe .
+          zip -j dlock-win.zip dlock.exe
+          rm dlock.exe
+          echo "Preparing macOS amd64 binary"
+          GOOS=darwin GOARCH=amd64 go build -ldflags="-X 'main.AppVersion=${{ github.ref_name}} '"  -o dlock .
+          zip -j dlock-mac-amd64.zip dlock
+          rm dlock
+          echo "Preparing macOS arm64 binary"
+          GOOS=darwin GOARCH=arm64 go build -ldflags="-X 'main.AppVersion=${{ github.ref_name}} '"  -o dlock .
+          zip -j dlock-mac-arm64.zip dlock
+          rm dlock
+          echo "Preparing Linux binary"
+          GOOS=linux GOARCH=amd64 go build -ldflags="-X 'main.AppVersion=${{ github.ref_name}} '"  -o dlock .
+          zip -j dlock-linux.zip dlock
+          rm dlock
+
+      - uses: AButler/upload-release-assets@v2.0
+        with:
+          files: '*.zip'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          release-tag: ${{  github.ref_name }}
