@@ -20,7 +20,7 @@ jobs:
 
       - name: Build binaries
         run: |
-          go get
+          go get ./cmd/dlock
           echo "Preparing Windows binary"
           GOOS=windows GOARCH=amd64 go build -ldflags="-X 'main.AppVersion=${{ github.ref_name}} '" -o dlock.exe ./cmd/dlock
           zip -j dlock-win.zip dlock.exe
